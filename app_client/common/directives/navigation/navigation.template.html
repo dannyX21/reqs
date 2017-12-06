@@ -1,0 +1,41 @@
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/reqs/"><span class="glyphicon glyphicon-home"></span> Home</a>
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar-main">
+      <ul class="nav navbar-nav">
+        <li><a href="new-requisition"><span class="glyphicon glyphicon-plus"></span> New requisition</a></li>
+      </ul>
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+          <a href="" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-briefcase"></span> Accounts <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="/accounts/">View all...</a></li>
+            <li><a ng-show="navvm.currentUser.admin" href="/new-account/">New...</a></li>
+          </ul>
+        </li>
+        <li><a href="about"><span class="glyphicon glyphicon-info-sign"></span> About</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li ng-hide="navvm.isLoggedIn"><a href="/login?page={{ navvm.currentPath }}"><span class="glyphicon glyphicon-log-in"></span> Sign in</a></li>
+        <li ng-show="navvm.isLoggedIn" class="dropdown">
+          <a href="" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ navvm.currentUser.username }} <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="/user/{{navvm.currentUser._id}}"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
+            <li><a href="" ng-click="navvm.logout()"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="alert alert-warning" ng-show="navvm.currentUser.delegating">
+  Requisitions assigned to you are being delegated to: <strong>{{navvm.currentUser.delegateTo.name}}</strong> until: {{navvm.currentUser.delegateUntil | date: "MM/dd/yyyy"}}.
+  <button class="btn btn-small" ng-click="navvm.unDelegate()">Turn off</button>
+</div>

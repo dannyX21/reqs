@@ -1,0 +1,110 @@
+.panel-body {
+  margin-top: : 0px;
+  margin-bottom: 0px;
+}
+.well {
+  margin-bottom: 0px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.td-ln {
+  width: 2%;
+}
+#po-panel{
+  margin-bottom: 3px;
+}
+
+#div-po-info{
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+body {
+  padding-top: 55px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+}
+
+#logo {
+  text-align: center;
+  width: auto;
+  height: 100px;
+}
+
+thead th {
+  text-align: center;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}
+
+.left {
+  text-align: left;
+}
+
+.badge {
+  background-color: #428bca;
+}
+
+.table > tbody > tr > td {
+     vertical-align: middle;
+}
+
+.md-datepicker-button {
+  display: none;
+}
+
+md-switch{
+  margin-top: 0px;
+}
+
+#table-req-info>tbody>tr>td {
+  border-top: none;
+}
+
+#progress-status {
+  font-size: 18px;
+}
+
+.progress {
+  height: 25px;
+  vertical-align: middle;
+}
+.progress>div {
+  vertical-align: middle;
+  padding-top: 2px;
+}
+
+.nav-tabs > li {
+  font-size: 20px;
+}
+
+.nav-tabs.nav-justified>.active>a:hover,
+.nav-tabs.nav-justified>.active>a {
+  background-color: #f0f8ff;
+}
+
+.md-autocomplete-suggestions-container{
+   z-index:100000 !important; /* any number of choice > 1050*/
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.error {
+  color: red;
+}
+
+.red {
+  color: red;
+}
+
+.green {
+  color: green;
+}

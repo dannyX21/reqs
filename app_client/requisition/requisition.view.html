@@ -1,0 +1,304 @@
+<navigation></navigation>
+<div class="container">
+  <div class="alert alert-danger" ng-show="vm.errorMsg">
+    {{vm.errorMsg}}
+  </div>
+  <div class="row">
+    <div class="col-sm-6" ng-switch="vm.requisition.status">
+      <div class="btn-group" ng-switch-when="0">
+        <button type="button" class="btn btn-primary btn-lg" ng-click="vm.submitReq()" ng-disabled="vm.requisition.total <= 0 || formOrderLines.$invalid"><span class="glyphicon glyphicon-send"></span> Submit</button>
+        <button type="button" class="btn btn-danger btn-lg" ng-click="vm.cancel()"><span class="glyphicon glyphicon-remove"></span> Cancel</button>
+      </div>
+      <div class="btn-group" ng-switch-default>
+        <button type="button" class="btn btn-primary btn-lg" title="Save changes." ng-disabled="(vm.requisition.status < 2 && !vm.editMode) || (vm.requisition.status === 1 && (formOrderLines.$invalid || vm.requisition.total <= 0)) || (vm.requisition.status > 1 && vm.currentUser._id != vm.requisition.submitterId)" ng-click="vm.updateRequisition()"><span class="glyphicon glyphicon-floppy-disk"></span> Save</button>
+        <button type="button" class="btn btn-default btn-lg" title="Edit requisition information." ng-disabled="vm.requisition.status<0 || vm.requisition.status>1 || vm.currentUser._id != vm.requisition.submitterId" ng-click="vm.switchToEditMode()"><span class="glyphicon glyphicon-edit"></span> Edit</button>
+        <button type="button" class="btn btn-warning btn-lg" title="Void requisition." ng-disabled="vm.requisition.status < 0 || vm.currentUser._id!=vm.requisition.submitterId" ng-click="vm.voidRequisition()"><span class="glyphicon glyphicon-ban-circle"></span> Void</button>
+        <button type="button" class="btn btn-success btn-lg" title="Approve requisition."ng-click="vm.approveRequisition()" ng-disabled="!vm.canApprove || (vm.requisition.status!=1 && vm.requisition.status!=-2)"><span class="glyphicon glyphicon-thumbs-up"></span> Approve</button>
+        <button type="button" class="btn btn-danger btn-lg" title="Reject requisition." ng-click="vm.rejectRequisition()" ng-disabled="!vm.canApprove || vm.requisition.status<=0 || vm.requisition.status>2"><span class="glyphicon glyphicon-thumbs-down"></span> Reject</button>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="alert alert-dismissable fade in" ng-class="vm.messageClass" ng-show="vm.messageVisible">
+        <span class="center" ng-bind-html="vm.message"></span>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-12">
+      <br />
+      <div class="progress">
+        <div class="progress-bar progress-bar-striped active" ng-class="{'progress-bar-success':vm.requisition.status==4,'progress-bar-warning':vm.requisition.status==-1,'progress-bar-danger':vm.requisition.status==-2}" role="progressbar" aria-valuenow="{{ vm.requisition.status>=0 ? vm.requisition.status + 1 : 5}}" aria-valuemin="0" aria-valuemax="5" style="width:{{(vm.requisition.status>=0 ? (vm.requisition.status + 1) / 5 : 1 ) * 100}}%;">
+          <order-status id="progress-status" status="vm.requisition.status"></order-status>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel-group">
+    <div class="panel panel-info">  <!-- Requisition header -->
+      <div class="panel-heading">Requisition header</div>
+      <div class="panel-body">
+        <table class="table" id="table-req-info">
+          <tbody>
+            <tr>
+              <td>
+                <span class="text-default"><strong>Requisition# </strong></span>
+                <span class="text-info" ng-switch="vm.requisition._id"><strong ng-switch-when="undefined">n/a</strong><strong ng-switch-default>{{vm.requisition._id}}</strong></span>
+              </td>
+              <td>
+                <span class="text-default"><strong>Created: </strong></span>
+                <span class="text-info"><strong>{{vm.requisition.dateSubmitted |date:'MM/dd/yyyy'}}</strong></span>
+              </td>
+              <td>
+                <span class="text-default"><strong>Submitter: </strong></span>
+                <span class="text-info"><strong>{{vm.requisition.submitterName}}</strong></span>
+              </td>
+              <td>
+                <span><strong>Currency:</strong></span>
+                <span class="text-primary"><strong>{{vm.requisition.currency}}</strong></span>
+              </td>
+              <td>
+                <span><strong>Order type:</strong></span>
+                <span class="text-primary" ng-switch="vm.requisition.orderType"><strong ng-switch-when="I">Inventory</strong><strong ng-switch-when="N">Non-inventory</strong></span>
+              </td>
+            </tr>
+            <tr>
+            <tr ng-show="!vm.editMode && (vm.requisition.status!=0)">
+              <td>
+                <span><strong>Vendor:</strong></span>
+                <span class="text-primary"><strong>{{vm.requisition.vendor.name}}</strong></span>
+              </td>
+              <td>
+                <span><strong>Date req:</strong></span>
+                <span class="text-primary"><strong>{{vm.requisition.dateRequired|date:"MM/dd/yyyy"}}</strong></span>
+              </td>
+              <td>
+                <div ng-show="vm.requisition.acct!=''">
+                  <span><strong>Acct#</strong></span>
+                  <span class="text-primary"><strong>{{vm.requisition.acct.num}}</strong></span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="row" ng-show="vm.requisition.attachments.length > 0">
+          <div class="col-sm-12">
+            <span><strong>Attachment(s):</strong> <span ng-repeat="attachment in vm.requisition.attachments"><a href="/uploads/{{attachment}}" target="_blank"><span class="glyphicon glyphicon-paperclip"></span>{{attachment}}, </a></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-info" ng-show="vm.editMode || (vm.requisition.status==0)">  <!-- Requisition Information -->
+      <div class="panel-heading">Requisition information</div>
+      <div class="panel-body">
+        <form class="form-horizontal" role="form" name="formReqInfo">
+          <div class="form-group">
+            <div class="row">
+              <label class="control-label col-sm-1" for="vendor">Vendor</label>
+              <div class="col-sm-2">
+                <select class="form-control" id="vendor" name="vendor" ng-model="vm.requisition.vendor" ng-options="v.name for v in vm.vendors track by v.num" autofocus required>
+                  <!-- <option ng-repeat="ven in vm.vendors" value="{{ven.id.toString()}}">{{ven.name}}</option> -->
+                </select>
+              </div>
+              <label class="control-label col-sm-2" for="dateRequired">Date required</label>
+              <div class="col-sm-2">
+                <md-datepicker name="dateRequired" id="dateRequired" ng-model="vm.requisition.dateRequired" md-placeholder="Date required" required></md-datepicker>
+              </div>
+              <label class="control-label col-sm-1" for="currency">Currency</label>
+              <div class="col-sm-2">
+                <select class="form-control" id="currency" name="currency" ng-model="vm.requisition.currency" required>
+                  <option value="USD">USD</option>
+                  <option value="MXN">MXN</option>
+                </select>
+              </div>
+              <div class="col-sm-1">
+                <div class="btn btn-primary btn-upload" upload-button url="/api/upload/" param="attachment" multiple="false" required="false" on-success="vm.onAddAttachment(response)" on-error="vm.onAttachmentError(response)"><span class="glyphicon glyphicon-paperclip"></span> Attach file</div>
+              </div>
+            </div>
+            <br />
+            <div clas="row">
+              <label class="control-label col-sm-2" for="ordertype">Order type</label>
+              <div class="col-sm-2">
+                <select class="form-control" id="orderType" name="orderType" ng-model="vm.requisition.orderType" ng-change="vm.updateAcct()"required>
+                  <option value="I">Inventory</option>
+                  <option value="N">Non-Inventory</option>
+                </select>
+              </div>
+              <label class="control-label col-sm-2" for="acct">Account#</label>
+              <div class="col-sm-4">
+                <select class="form-control" id="acct" name="acct" ng-model="vm.account" ng-options="a.num +' - ' + a.name for a in vm.accounts track by a._id" ng-disabled="vm.requisition.orderType=='I'" ng-required="vm.requisition.orderType=='N'" ng-change="vm.setAcct()">
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <a data-toggle="collapse" data-target="#approvalBody" href="">Approval</a>
+      </div>
+      <div id="approvalBody" class="panel-body collapse">
+        <div class="row" ng-hide="vm.requisition.optApprovers.length==0">
+          <h4>Optional approvers <small>Requisition must be approved by at least one of the following users.</small></h4>
+          <md-chips ng-model="vm.requisition.optApprovers" name="optApprovers" readonly="true" md-removable="false">
+            <md-chip-template>
+              <strong ng-class="{'red': vm.requisition.optApprovals[$index]===-1,'green':vm.requisition.optApprovals[$index]===1}">{{$chip.username}}</strong>
+              <em ng-class="{'red': vm.requisition.optApprovals[$index]===-1,'green':vm.requisition.optApprovals[$index]===1}">{{$chip.name}}</em>&nbsp;
+              <span ng-switch="vm.requisition.optApprovals[$index]">
+                <span ng-switch-when="-1" class="red glyphicon glyphicon-thumbs-down"></span>
+                <span ng-switch-when="1" class="green glyphicon glyphicon-thumbs-up"></span>
+                <span ng-switch-default  class="glyphicon glyphicon-time"></span>
+              </span>
+            </md-chip-template>
+          </md-chips>
+        </div>
+        <div class="row" ng-hide="vm.requisition.manApprovers.length==0">
+          <h4>Mandatory approvers <small>Requisition must be approved by all of the following users.</small></h4>
+          <md-chips ng-model="vm.requisition.manApprovers" name="manApprovers" readonly="true" md-removable="false">
+            <md-chip-template>
+              <strong ng-class="{'red': vm.requisition.manApprovals[$index]===-1,'green':vm.requisition.manApprovals[$index]===1}">{{$chip.username}}</strong>
+              <em ng-class="{'red': vm.requisition.manApprovals[$index]===-1,'green':vm.requisition.manApprovals[$index]===1}">{{$chip.name}}</em>&nbsp;
+              <span ng-switch="vm.requisition.manApprovals[$index]">
+                <span ng-switch-when="-1" class="red glyphicon glyphicon-thumbs-down"></span>
+                <span ng-switch-when="1" class="green glyphicon glyphicon-thumbs-up"></span>
+                <span ng-switch-default  class="glyphicon glyphicon-time"></span>
+              </span>
+            </md-chip-template>
+          </md-chips>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-info" ng-show="vm.requisition.status>1">  <!-- Purchase Order Information -->
+      <div class="panel-heading">Purchase order information</div>
+      <div class="panel-body">
+        <form class="form-horizontal" role="form" name="formOrder">
+          <div class="form-group">
+            <label class="control-label col-sm-1" for="po">PO#</label>
+            <div class="col-sm-2">
+              <input type="text" class="form-control" id="po" name="po" ng-model="vm.requisition.po" ng-change="vm.updateStatus()" autofocus/>
+            </div>
+            <div class="col-sm-2">
+              <!-- <input type="checkbox" id="confirmed" name="confirmed" data-toggle="toggle" data-on="Confirmed" data-off="Not confirmed" ng-model="vm.requisition.confirmed" ng-disabled="vm.requisition.po=='' || formConfirmedDate.$invalid" ng-change="vm.updateConfirmed()"/> -->
+              <md-switch id="switch-confirmed" class="md-primary" ng-model="vm.requisition.confirmed" aria-label="Confirmed" ng-disabled="vm.requisition.po=='' || formConfirmedDate.$invalid" ng-change="vm.updateConfirmed()"><strong>Confirmed</strong></md-switch>
+            </div>
+            <label class="control-label col-sm-3 cenabledenter" ng-show="vm.requisition.dateOrdered!=undefined">Date ordered: <span class="text-primary">{{vm.requisition.dateOrdered|date:"MM/dd/yyyy"}}</span></label>
+            <label class="control-label col-sm-3 center" ng-show="vm.requisition.dateConfirmed!=undefined">Date confirmed: <span class="text-primary">{{vm.requisition.dateConfirmed|date:"MM/dd/yyyy"}}</span></label>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="panel panel-info" ng-show="vm.requisition.status > 1 || formReqInfo.$valid "> <!--Order Items-->
+      <div class="panel-heading">Order Items</div>
+      <div class="panel-body">
+        <div ng-show="vm.editMode || (vm.requisition.status==0)">
+          <button class="btn btn-primary" ng-click="vm.addLine()" ng-show="vm.requisition.status>=0 && vm.requisition.status<2"><span class="glyphicon glyphicon-plus"></span> Add item</button>
+          <br />
+          <form role="form" name="formOrderLines">
+            <table class="table table-striped table-hover table-responsive table-bordered table-condensed" ng-show="vm.requisition.lines.length>0">
+            <thead>
+              <tr>
+                <th>Ln#</th>
+                <th>P/N</th>
+                <th>Description</th>
+                <th>UM</th>
+                <th>Rev. Level</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Extended Price</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="line in vm.requisition.lines">
+                <td class="col-xs-1 td-ln center"><span>{{line.ln}}</span></td>
+                <td class="col-xs-1"><input type="text" class="form-control" ng-model="line.pn" required/></td>
+                <td class="col-xs-2"><input type="text" class="form-control" ng-model="line.desc" required/></td>
+                <td class="col-xs-1">
+                  <select class="form-control" ng-model="line.um" required>
+                    <option ng-repeat="um in vm.ums" value="{{um}}">{{um}}</option>
+                  </select>
+                </td>
+                <td class="col-xs-1"><input type="text" class="form-control center" ng-model="line.rev" required /></td>
+                <td class="col-xs-1"><input type="text" class="form-control right" ng-model="line.qty" ng-change="vm.updateTotal()" required/></td>
+                <td class="col-xs-1"><input type="text" class="form-control right" ng-model="line.unitPrice" ng-change="vm.updateTotal()" required/></td>
+                <td class="col-xs-1 right"><span>{{line.unitPrice * line.qty | currency}}</span></td>
+                <td class="col-xs-1 center"><button class="btn btn-danger btn-sm" ng-click="vm.removeLine($index)"><span class="glyphicon glyphicon-trash"</button></td>
+              </tr>
+              <tr ng-show="vm.requisition.total!==0">
+                <td></td>
+                <td class="center"><span><strong>Total: </strong></span></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="right"><span class="text-success"><strong>{{vm.requisition.total|currency}}</strong></span></td>
+                <td></td>
+              </tr>
+            </tbody>
+            </table>
+          </form>
+        </div>
+        <div ng-show="!vm.editMode && (vm.requisition.status!=0)">
+          <div class="col-sm-offset-9 col-sm-3 right" ng-show="vm.requisition.status>2">
+            <label for="dtConfirmed">Apply all:</label>
+            <md-datepicker id="dtConfirmed" ng-model="vm.confirmedDate" md-placeholder="Date confirmed" ng-change="vm.updateConfirmedDate()"></md-datepicker>
+          </div>
+          <form role="form" name="formConfirmedDate">
+            <table class="table table-striped table-hover table-responsive table-bordered table-condensed" ng-show="vm.requisition.lines.length>0">
+              <thead>
+                <tr>
+                  <th>Ln#</th>
+                  <th>P/N</th>
+                  <th>Description</th>
+                  <th>UM</th>
+                  <th>Rev. Level</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Extended Price</th>
+                  <th ng-show="vm.requisition.status>2">Confirmed Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="line in vm.requisition.lines">
+                  <td class="center"><span>{{line.ln}}</span></td>
+                  <td class="center">{{line.pn}}</td>
+                  <td>{{line.desc}}</td>
+                  <td class="center">{{line.um}}</td>
+                  <td class="center">{{line.rev}}</td>
+                  <td class="right">{{line.qty|number}}</td>
+                  <td class="right">{{line.unitPrice|currency}}</td>
+                  <td class="right">{{line.unitPrice * line.qty | currency}}</td>
+                  <td class="center" ng-show="vm.requisition.status>2"><md-datepicker ng-model="line.dateConfirmed" md-placeholder="Date confirmed" required></md-datepicker></td>
+                </tr>
+                <tr ng-show="vm.requisition.total!==0">
+                  <td></td>
+                  <td><span><strong>Total: </strong></span></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td class="right"><span class="text-success"><strong>{{vm.requisition.total|currency}}</strong></span></td>
+                  <td ng-show="vm.requisition.status>2"></td>
+                </tr>
+              </tbody>
+            </table>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-info" ng-show="vm.requisition.status > 1 || formReqInfo.$valid "> <!-- Comments -->
+      <div class="panel-heading">Comments</div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label for="comments">Comments</label>
+          <textarea class="form-control" rows="3" id="comments" name="comments" ng-model="vm.requisition.comments"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<p>
+  formOrderLines.$valid = {{formOrderLines.$valid}}
+</p>

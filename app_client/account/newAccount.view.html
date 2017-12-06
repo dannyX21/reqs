@@ -1,0 +1,173 @@
+<navigation></navigation>
+<div class="row">
+  <div class="col-sm-4">
+    <div class="btn-group">
+      <button class="btn btn-primary btn-lg" ng-click="vm.saveAccount()" ng-disabled="!vm.currentUser.admin"><span class="glyphicon glyphicon-floppy-disk"></span> Save</button>
+      <button class="btn btn-default btn-lg" ng-click="vm.cancel()"><span class="glyphicon glyphicon-remove"></span> Cancel</button>
+    </div>
+  </div>
+  <div class="col-sm-8">
+    <div class="alert" ng-class="vm.messageClass" ng-show="vm.messageVisible">
+      {{vm.message}}
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-sm-6" ng-switch="vm.account._id">
+    <h1 ng-switch-when="undefined">New Account</h1>
+    <h1 ng-switch-default>View Account</h1>
+  </div>
+  <div class="col-sm-6">
+    <h3 class="text-muted right" ng-show="vm.account.num">{{vm.account.num}} - {{vm.account.name}}</h3>
+  </div>
+</div>
+<div class="row">
+  <form class="form-horizontal" role="form" name="frmAccount" novalidate>
+    <div class="form-group">
+      <div class="row">
+        <label class="control-label col-sm-2" for="num">Account #</label>
+        <div class="col-sm-2">
+          <input class="form-control" id="num" name="num" ng-model="vm.account.num" required placeholder="##-##-#####-####" pattern="\d{2}-\d{2}-\d{5}-\d{4}" title="Account must have this pattern: ##-##-#####-####" ng-class="{'has-error': frmAccount.num.$error.pattern}" autofocus/>
+        </div>
+        <label class="control-label col-sm-1" for="name">Name</label>
+        <div class="col-sm-3">
+          <input class="form-control" id="name" name="name" ng-model="vm.account.name" required placeholder="Account name" title="Acocunt name is required." ng-class="{'has-error': frmAccount.name.$error.required}"/>
+        </div>
+        <label class="control-label col-sm-1" for="category">Category</label>
+        <div class="col-sm-2">
+          <select class="form-control" id="category" name="category" ng-model="vm.account.categoria"  ng-change="vm.onCategoriaChange()" ng-options="cat.name for cat in vm.categories track by cat.id" required title="Please select a category.">
+          </select>
+        </div>
+      </div>
+    </div>
+  </form>
+  <div class="alert alert-danger" ng-show="frmAccount.$invalid && !frmAccount.$pristine">
+    <span ng-show="frmAccount.num.$invalid">Account# must have the following pattern: ##-##-#####-####.<br /></span>
+    <span ng-show="frmAccount.name.$invalid">Account name is required.<br /></span>
+    <span ng-show="frmAccount.category.$invalid">Category field is required.</span>
+  </div>
+</div>
+<div class="row">
+  <h3>Approval rules</h3>
+  <button type="button" class="btn btn-primary" ng-click="vm.newRule()" title="Create new approval rule" ng-disabled="frmAccount.$invalid || !vm.currentUser.admin"><span class="glyphicon glyphicon-plus"></span> New Rule</button>
+</div>
+<br />
+<div class="row">
+  <div class="panel-group">
+    <div class="panel panel-primary" ng-repeat="rule in vm.account.rules">
+    <div class="panel-heading">
+      <button class="btn btn-danger btn-sm pull-right" title="Remove rule" ng-click="vm.removeRule($index)"><span class="glyphicon glyphicon-trash"></span></button>
+      <h4>Value range: {{rule.valueFrom | currency}} - {{rule.valueTo | currency}}</h4>
+    </div>
+    <div class="panel-body">
+      <div ng-hide="rule.optional.length==0">
+        <h4>Optional approvers <small>requisitions can be approved by any of the following users.</small></h4>
+        <md-chips ng-model="rule.optional" class="custom-chips" readonly="true" md-removable="false">
+          <md-chip-template>
+            <span>
+              <span class="glyphicon glyphicon-user"></span>
+              <strong>{{$chip.username}}</strong>
+              <em>{{$chip.name}}</em>
+            </span>
+          </md-chip-template>
+        </md-chips>
+      </div>
+      <div ng-hide="rule.mandatory.length==0">
+        <h4>Mandatory approvers <small>requisitions MUST be approved by ALL of the following users.</small></h4>
+        <md-chips ng-model="rule.mandatory" class="custom-chips" readonly="true" md-removable="false">
+          <md-chip-template>
+            <span>
+              <span class="glyphicon glyphicon-user"></span>
+              <strong>{{$chip.username}}</strong>
+              <em>{{$chip.name}}</em>
+            </span>
+          </md-chip-template>
+        </md-chips>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<div class="modal fade" id="myModal" role="dialog"> <!--Modal -->
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Approval rule</h4>
+      </div>
+      <div class="modal-body">
+        <h4>Value range</h4>
+        <div class="row">
+          <div class="form-group">
+            <label class="control-label col-sm-offset-2 col-sm-1 right" for="valueFrom">From</label>
+            <div class="col-sm-3">
+              <input type="number" class="form-control right" ng-model="vm.rule.valueFrom" id="valueFrom" required ng-disabled="true" />
+            </div>
+            <label class="control-label col-sm-1 right" for="valueTo">to</label>
+            <div class="col-sm-3">
+              <input type="number" class="form-control right" ng-model="vm.rule.valueTo" id="valueTo" required autofocus/>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <h4>Optional approvers <small>Requisitions can be approved by any of the following users.</small></h4>
+          <md-chips ng-model="vm.rule.optional" md-autocomplete-snap="" md-transform-chip="vm.transformChip($chip)" md-require-match="true">
+            <md-autocomplete
+              md-autoselect="true"
+              placeholder="Enter user name"
+              md-item-text="user.name"
+              md-no-cache="false"
+              md-items="user in vm.querySearch(vm.searchTextOpt)"
+              md-min-length="0"
+              md-search-text="vm.searchTextOpt"
+              md-select-on-match="true"
+              md-match-case-insensitive="true"
+              md-selected-item-change="vm.selectedItemChange(item)"
+              md-require-match
+              md-selected-item="vm.selectedUserOpt">
+              <span md-highlight-text="vm.searchTextOpt">{{user.username}} : {{user.name}}</span>
+              <md-not-found>No match found</md-not-found>
+            </md-autocomplete>
+            <md-chip-template>
+              <span>
+                <span class="glyphicon glyphicon-user"></span><strong>{{$chip.username}}</strong>
+                <em>{{$chip.name}}</em>
+              </span>
+            </md-chip-template>
+          </md-chips>
+        </div>
+        <div class="row">
+          <h4>Mandatory approvers <small>Requisitions MUST be approved by ALL of the following users.</small></h4>
+          <md-chips ng-model="vm.rule.mandatory" md-autocomplete-snap="" md-transform-chip="vm.transformChip($chip)" md-require-match="true">
+            <md-autocomplete
+              md-autoselect="true"
+              placeholder="Enter user name"
+              md-item-text="user.name"
+              md-no-cache="false"
+              md-items="user in vm.querySearch(vm.searchTextMan)"
+              md-min-length="0"
+              md-search-text="vm.searchTextMan"
+              md-select-on-match="true"
+              md-match-case-insensitive="true"
+              md-selected-item-change="vm.selectedItemChange(item)"
+              md-require-match
+              md-selected-item="vm.selectedUserMan">
+              <span md-highlight-text="vm.searchTextMan">{{user.username}} : {{user.name}}</span>
+              <md-not-found>No match found</md-not-found>
+            </md-autocomplete>
+            <md-chip-template>
+              <span>
+                <span class="glyphicon glyphicon-user"></span> <strong>{{$chip.username}}</strong>
+                <em>{{$chip.name}}</em>
+              </span>
+            </md-chip-template>
+          </md-chips>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="vm.addRule()" ng-disabled="vm.rule.valueFrom>=vm.rule.valueTo || (vm.rule.optional.length==0 && vm.rule.mandatory.length==0)"><span class="glyphicon glyphicon-ok"></span> Add rule</button>
+      </div>
+    </div>
+  </div>
+</div>

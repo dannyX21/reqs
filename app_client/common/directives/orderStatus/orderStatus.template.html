@@ -1,0 +1,10 @@
+<span ng-switch="thisStatus">
+  <span ng-switch-when="0"><span class="glyphicon glyphicon-file"></span> Not submitted</span>
+  <span ng-switch-when="1"><span class="glyphicon glyphicon-send"></span> Submitted</span>
+  <span ng-switch-when="2"><span class="glyphicon glyphicon-thumbs-up"></span> Approved</span>
+  <span ng-switch-when="3"><span class="glyphicon glyphicon-shopping-cart"></span> Ordered</span>
+  <span ng-switch-when="4"><span class="glyphicon glyphicon-ok"></span> Confirmed</span>
+  <span ng-switch-when="-1"><span class="glyphicon glyphicon-ban-circle"></span> Void</span>
+  <span ng-switch-when="-2"><span class="glyphicon glyphicon-thumbs-down"></span> Rejected</span>
+  <span ng-switch-default><span class="glyphicon glyphicon-file"></span> Not submitted</span>
+</span>

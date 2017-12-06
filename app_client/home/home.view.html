@@ -1,0 +1,422 @@
+<navigation></navigation>
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <br />
+      <img class="center-block" id="logo" src="/img/logo.png" />
+    </div>
+  </div>
+  <div class="row">
+    <div ng-show="!vm.currentUser" class="col-sm-12">
+      <br /><br />
+      <p class="lead text-center">If you have an account, please <a href="/login">login</a>, otherwise, please <a href="/register">register</a>.</p>
+    </div>
+    <div ng-hide="vm.currentUser==undefined" class="col-sm-12">
+      <h1 class="text-center">Purchase requisitions.</h1>
+      <div class="panel panel-default">
+      <div class="panel-heading"><a data-toggle="collapse" data-target="#filterBody" ng-click="vm.filterPanelUpdateIcon()">Filter <span ng-class="vm.filterIcon"></span></a></div>
+      <div class="panel-body collapse" id="filterBody" class="collapse">
+        <form role="form" name="form-filter">
+          <div class="form-group col-sm-2">
+            <label for="po">PO#</label>
+            <input class="form-control" type="text" name="po" id="po" ng-model="vm.po" placeholder="PO number" />
+          </div>
+          <div class="form-group col-sm-2">
+            <label for="submitter">Submitter</label>
+            <select class="form-control" id="submitter" name="submitter" ng-model="vm.submitter" ng-options="s.name for s in vm.submitters track by s._id"></select>
+          </div>
+          <div class="form-group col-sm-2">
+            <label for="vendor">Vendor</label>
+            <select class="form-control" id="vendor" name="vendor" ng-model="vm.vendor" ng-options="v.name for v in vm.vendors track by v.num"></select>
+          </div>
+          <div class="form-group col-sm-2">
+            <label for="start-date">Start date</label>
+            <md-datepicker name="start-date" id="start-date" ng-model="vm.startDate" md-placeholder="Start date"></md-datepicker>
+          </div>
+          <div class="form-group col-sm-2">
+            <label for="end-date">End date</label>
+            <md-datepicker name="end-date" id="end-date" ng-model="vm.endDate" md-placeholder="End date"></md-datepicker>
+          </div>
+          <div class="col-sm-offset-1 col-sm-1">
+            <br />
+            <button class="btn btn-primary" ng-click="vm.getRequisitions()">Filter</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    </div>
+  </div>
+  <div class="row">
+    <br />
+    <div ng-hide="vm.currentUser==undefined" class="col-sm-12">
+      <ul class="nav nav-tabs nav-justified">
+        <li class="active"><a data-toggle="tab" role="tab" data-target="#tasks"><span class="glyphicon glyphicon-tasks"></span> Tasks <badge-qty qty="vm.summary.forApproval.length + vm.summary.approved.length + vm.summary.ordered.length"></badge-qty></a></li>
+        <li><a data-toggle="tab" role="tab" data-target="#submitted"><span class="glyphicon glyphicon-send"></span> Submitted <badge-qty qty="vm.submitted.length"></badge-qty></a></li>
+        <li><a data-toggle="tab" role="tab" data-target="#approved"><span class="glyphicon glyphicon-thumbs-up"></span> Approved <badge-qty qty="vm.approved.length"></badge-qty></a></li>
+        <li><a data-toggle="tab" role="tab" data-target="#ordered"><span class="glyphicon glyphicon-shopping-cart"></span> Ordered <badge-qty qty="vm.ordered.length"></badge-qty></a></li>
+        <li><a data-toggle="tab" role="tab" data-target="#completed"><span class="glyphicon glyphicon-ok"></span> Complete <badge-qty qty="vm.completed.length"></badge-qty></a></li>
+        <li><a data-toggle="tab" role="tab" data-target="#rejected"><span class="glyphicon glyphicon-thumbs-down"></span> Rejected <badge-qty qty="vm.rejected.length"></badge-qty></a></li>
+      </ul>
+      <div class="tab-content">
+        <div id="tasks" class="tab-pane fade in active" role="tabpanel"><!-- Tasks -->
+          <div class="panel panel-primary">
+            <div class="panel-heading">Your tasks</div>
+            <div class="panel-body">
+              <div ng-show="vm.summary.approved.length>0">
+                <h2 class="center" title="Please process these requisitions.">Approved <badge-qty qty="vm.summary.approved.length"></badge-qty></h2>
+                <table class="table table-striped table-hover table-responsive table-bordered table-condensed">
+                  <thead>
+                    <tr>
+                      <th>Req #</th>
+                      <th>Submitter</th>
+                      <th>Submitted</th>
+                      <th>Approved</th>
+                      <th>Vendor</th>
+                      <th>Order Type</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="req in vm.summary.approved">
+                      <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                      <td class="center">{{req.submitterName}}</td>
+                      <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                      <td class="center">{{req.dateApproved|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateApproved"></time>)</small></td>
+                      <td class="center">{{req.vendorName}}</td>
+                      <td class="center">
+                        <span ng-switch="req.orderType">
+                          <span ng-switch-when="I">Inventory</span>
+                          <span ng-switch-when="N">Non-Inventory</span>
+                          <span ng-switch-default>Inventory</span>
+                        </span>
+                      </td>
+                      <td class="right">{{req.total|currency}}</td>
+                    </tr>
+                  </tr>
+                  </tbody>
+                </table>
+                <hr />
+              </div>
+              <div ng-show="vm.summary.ordered.length>0">
+                <h2 class="center" title="These requisitions are waiting for vendor confirmation.">Unconfirmed <badge-qty qty="vm.summary.ordered.length"></badge-qty></h2>
+                <table class="table table-striped table-hover table-responsive table-bordered table-condensed">
+                  <thead>
+                    <tr>
+                      <th>Req #</th>
+                      <th>PO#</th>
+                      <th>Submitter</th>
+                      <th>Submitted</th>
+                      <th>Ordered</th>
+                      <th>Vendor</th>
+                      <th>Order Type</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="req in vm.summary.ordered">
+                      <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                      <td class="center">{{req.po}}</td>
+                      <td class="center">{{req.submitterName}}</td>
+                      <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                      <td class="center">{{req.dateOrdered|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateOrdered"></time>)</small></td>
+                      <td class="center">{{req.vendorName}}</td>
+                      <td class="center">
+                        <span ng-switch="req.orderType">
+                          <span ng-switch-when="I">Inventory</span>
+                          <span ng-switch-when="N">Non-Inventory</span>
+                          <span ng-switch-default>Inventory</span>
+                        </span>
+                      </td>
+                      <td class="right">{{req.total|currency}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <hr />
+              </div>
+              <div ng-show="vm.summary.forApproval.length>0">
+                <h2 class="center" title="Requisitions that are waiting for your approval.">Assigned <badge-qty qty="vm.summary.forApproval.length"></badge-qty></h2>
+                <table class="table table-striped table-hover table-responsive table-bordered table-condensed">
+                  <thead>
+                    <tr>
+                      <th>Req #</th>
+                      <th>Submitter</th>
+                      <th>Submitted</th>
+                      <th>Vendor</th>
+                      <th>Order Type</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="req in vm.summary.forApproval">
+                      <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                      <td class="center">{{req.submitterName}}</td>
+                      <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                      <td class="center">{{req.vendorName}}</td>
+                      <td class="center">
+                        <span ng-switch="req.orderType">
+                          <span ng-switch-when="I">Inventory</span>
+                          <span ng-switch-when="N">Non-Inventory</span>
+                          <span ng-switch-default>Inventory</span>
+                        </span>
+                      </td>
+                      <td class="right">{{req.total|currency}}</td>
+                    </tr>
+                  </tr>
+                  </tbody>
+                </table>
+                <hr />
+              </div>
+              <div ng-show="vm.summary.approved.length ==0 && vm.summary.ordered.length == 0 && vm.summary.forApproval.length ==0">
+                <h2 class="center">You have no pending tasks. <span class="glyphicon glyphicon-flag"></span></h2>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="submitted" class="tab-pane fade" role="tabpanel"> <!-- Submitted requisitions -->
+          <div class="panel panel-primary">
+            <div class="panel-heading">Submitted Requisitions</div>
+            <div class="panel-body" ng-switch="vm.submitted.length">
+              <h2 ng-switch-when="0">No submitted requisitions were found.</h2>
+              <table class="table table-striped table-hover table-responsive table-bordered table-condensed" id="table-submitted" ng-switch-default>
+                <thead>
+                  <tr>
+                    <th>Req #</th>
+                    <th>Submitter</th>
+                    <th>Submitted</th>
+                    <th>Vendor</th>
+                    <th>Order Type</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="req in vm.submitted">
+                    <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                    <td class="center">{{req.submitterName}}</td>
+                    <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                    <td class="center">{{req.vendorName}}</td>
+                    <td class="center">
+                      <span ng-switch="req.orderType">
+                        <span ng-switch-when="I">Inventory</span>
+                        <span ng-switch-when="N">Non-Inventory</span>
+                        <span ng-switch-default>Inventory</span>
+                      </span>
+                    </td>
+                    <td class="right">{{req.total|currency}}</td>
+                  </tr>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="center"><strong>Total:</strong></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td class="right"><strong>{{vm.totalSubmitted|currency}}</strong></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="approved" class="tab-pane fade" role="tabpanel"> <!--Approved requisition -->
+          <div class="panel panel-primary">
+            <div class="panel-heading">Approved Requisitions</div>
+            <div class="panel-body" ng-switch="vm.approved.length">
+              <h2 ng-switch-when=0></h2>
+              <table class="table table-striped table-hover table-responsive table-bordered table-condensed" id="table-approved" ng-switch-default>
+                <thead>
+                  <tr>
+                    <th>Req #</th>
+                    <th>Submitter</th>
+                    <th>Submitted</th>
+                    <th>Approved</th>
+                    <th>Vendor</th>
+                    <th>Order Type</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="req in vm.approved">
+                    <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                    <td class="center">{{req.submitterName}}</td>
+                    <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                    <td class="center">{{req.dateApproved|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateApproved"></time>)</small></td>
+                    <td class="center">{{req.vendorName}}</td>
+                    <td class="center">
+                      <span ng-switch="req.orderType">
+                        <span ng-switch-when="I">Inventory</span>
+                        <span ng-switch-when="N">Non-Inventory</span>
+                        <span ng-switch-default>Inventory</span>
+                      </span>
+                    </td>
+                    <td class="right">{{req.total|currency}}</td>
+                  </tr>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="center"><strong>Total:</strong></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>                  
+                  <td class="right"><strong>{{vm.totalApproved|currency}}</strong></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="ordered" class="tab-pane fade" role="tabpanel">  <!--Ordered requisitions-->
+          <div class="panel panel-primary">
+            <div class="panel-heading">Ordered Requisitions</div>
+            <div class="panel-body" ng-switch="vm.ordered.length">
+              <h2 ng-switch-when="0">No ordered requisitions were found.</h2>
+              <table class="table table-striped table-hover table-responsive table-bordered table-condensed" id="table-ordered" ng-switch-default>
+            <thead>
+              <tr>
+                <th>Req #</th>
+                <th>PO#</th>
+                <th>Submitter</th>
+                <th>Submitted</th>
+                <th>Ordered</th>
+                <th>Vendor</th>
+                <th>Order Type</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="req in vm.ordered">
+                <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                <td class="center">{{req.po}}</td>
+                <td class="center">{{req.submitterName}}</td>
+                <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                <td class="center">{{req.dateOrdered|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateOrdered"></time>)</small></td>
+                <td class="center">{{req.vendorName}}</td>
+                <td class="center">
+                  <span ng-switch="req.orderType">
+                    <span ng-switch-when="I">Inventory</span>
+                    <span ng-switch-when="N">Non-Inventory</span>
+                    <span ng-switch-default>Inventory</span>
+                  </span>
+                </td>
+                <td class="right">{{req.total|currency}}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="center"><strong>Total:</strong></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="right"><strong>{{vm.totalOrdered|currency}}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+            </div>
+          </div>
+        </div>
+        <div id="completed" class="tab-pane fade" role="tabpanel"> <!-- Completed requisitions -->
+          <div class="panel-group">
+            <div class="panel panel-primary">
+              <div class="panel-heading">Complete Requisitions</div>
+              <div class="panel-body" ng-switch="vm.completed.length">
+                <h2 ng-switch-when="0">No completed requisitions were found.</h2>
+                <table class="table table-striped table-hover table-responsive table-bordered table-condensed" id="table-complete" ng-switch-default>
+                  <thead>
+                    <tr>
+                      <th>Req #</th>
+                      <th>PO#</th>
+                      <th>Submitter</th>
+                      <th>Submitted</th>
+                      <th>Confirmed*</th>
+                      <th>Vendor</th>
+                      <th>Order Type</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="req in vm.completed">
+                      <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                      <td class="center">{{req.po}}</td>
+                      <td class="center">{{req.submitterName}}</td>
+                      <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                      <td class="center">{{req.dateConfirmed|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateConfirmed"></time>)</small></td>
+                      <td class="center">{{req.vendorName}}</td>
+                      <td class="center">
+                        <span ng-switch="req.orderType">
+                          <span ng-switch-when="I">Inventory</span>
+                          <span ng-switch-when="N">Non-Inventory</span>
+                          <span ng-switch-default>Inventory</span>
+                        </span>
+                      </td>
+                      <td class="right">{{req.total|currency}}</td>
+                    </tr>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td class="center"><strong>Total:</strong></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="right"><strong>{{vm.totalCompleted|currency}}</strong></td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="rejected" class="tab-pane fade" role="tabpanel"> <!-- Rejected requisitions -->
+          <div class="panel panel-primary">
+            <div class="panel-heading">Rejected Requisitions</div>
+            <div class="panel-body" ng-switch="vm.rejected.length">
+              <h2 ng-switch-when="0">No rejected requisitions were found.</h2>
+              <table class="table table-striped table-hover table-responsive table-bordered table-condensed" id="table-complete" ng-switch-default>
+                <thead>
+                  <tr>
+                    <th>Req #</th>
+                    <th>Submitter</th>
+                    <th>Submitted</th>
+                    <th>Rejected</th>
+                    <th>Vendor</th>
+                    <th>Order Type</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="req in vm.rejected">
+                    <td class="center"><a href="requisition/{{req._id}}">{{req._id}}</a></td>
+                    <td class="center">{{req.submitterName}}</td>
+                    <td class="center">{{req.dateSubmitted|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateSubmitted"></time>)</small></td>
+                    <td class="center">{{req.dateRejected|date:"MM/dd/yyyy"}} <small>(<time am-time-ago="req.dateRejected"></time>)</small></td>
+                    <td class="center">{{req.vendorName}}</td>
+                    <td class="center">
+                      <span ng-switch="req.orderType">
+                        <span ng-switch-when="I">Inventory</span>
+                        <span ng-switch-when="N">Non-Inventory</span>
+                        <span ng-switch-default>Inventory</span>
+                      </span>
+                    </td>
+                    <td class="right">{{req.total|currency}}</td>
+                  </tr>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="center"><strong>Total:</strong></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td class="right"><strong>{{vm.totalRejected|currency}}</strong></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

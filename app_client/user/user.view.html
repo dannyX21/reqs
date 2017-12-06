@@ -1,0 +1,62 @@
+<navigation></navigation>
+<page-header content="vm.pageHeader"></page-header>
+<div class="row">
+  <div class="col-sm-offset-2 btn-group">
+    <button type="button" class="btn btn-primary btn-lg" ng-click="vm.updateUser()"><span class="glyphicon glyphicon-floppy-disk"></span> Save</button>
+    <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-remove"></span> Cancel</button>
+  </div>
+</div>
+<br />
+<div class="row">
+  <div class="col-sm-offset-2 col-sm-8">
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <h3 class="center">{{vm.user.username}}</h3>
+      </div>
+      <div class="panel-body">
+        <form role="form" class="form-horizontal" name="frmUser">
+          <div class="form-group">
+            <label class="col-sm-6 right" for="name">Name:</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" id="name" name="name" ng-model="vm.user.name" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-6 right" for="name">Email:</label>
+            <div class="col-sm-6">
+              <input type="email" class="form-control" id="email" name="email" ng-model="vm.user.email" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-6 right" for="mailNotifications">Receive mail notifications?</label>
+            <div class="col-sm-6">
+              <md-switch name="mailNotifications" id="mailNotifications" class="md-primary" ng-disabled="vm.currentUser._id != vm.user._id && !vm.currentUser.isAdmin" ng-model="vm.user.mailNotifications" aria-label="Receive mail notifications?"></md-switch>
+            </div>
+          </div>          
+          <div class="form-group">
+            <label class="col-sm-6 right" for="isAdmin">Is Admin?</label>
+            <div class="col-sm-6">
+              <md-switch name="isAdmin" id="isAdmin" class="md-primary" ng-disabled="!vm.currentUser.isAdmin" ng-model="vm.user.isAdmin" aria-label="Is Admin switch"></md-switch>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-6 right" for="delegating">Delegate Requisitions?</label>
+            <div class="col-sm-6">
+              <md-switch name="delegating" id="delegating" class="md-primary" ng-model="vm.user.delegating" ng-change="vm.updateDelegateUntil()" aria-label="Delegating requisitions switch"></md-switch>
+            </div>
+          </div>
+        </form>
+        <div class="form-group">
+          <label class="col-sm-2 right" for="delegateToU">Delegate to:</label>
+          <div class="col-sm-4">
+            <select class="form-control" name="dalegateToU" id="delegateToU" ng-disabled="!vm.user.delegating" ng-model="vm.user.delegateToU" ng-change="vm.updateDelegateTo()" ng-options="user.name for user in vm.users track by user._id"></select>
+          </div>
+          <label class="col-sm-2 right" for="delegateUntil">Until:</label>
+          <div class="col-sm-4">
+            <md-datepicker name="delegateUntil" id="delegateUntil" ng-model="vm.user.delegateUntil" md-placeholder="Delegate until"></md-datepicker>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
